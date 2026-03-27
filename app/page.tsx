@@ -48,6 +48,7 @@ interface AnalysisResult {
   };
   linkedPublishedServices: LinkedPublishedService[];
   findings: Finding[];
+  aiRecommendations?: string;
 }
 
 const starterConfig = `config firewall vip
@@ -386,6 +387,23 @@ export default function HomePage() {
                   label="Published Services"
                   value={String(result.summary.linkedPublishedServiceCount)}
                 />
+              </div>
+            </section>
+
+            <section>
+              <h2>AI Summary & Recommendations</h2>
+              <div
+                style={{
+                  border: "1px solid #334155",
+                  borderRadius: 12,
+                  padding: 16,
+                  background: "#111827",
+                  color: "#e2e8f0",
+                  whiteSpace: "pre-wrap",
+                  lineHeight: 1.6,
+                }}
+              >
+                {result.aiRecommendations ?? "No recommendations generated."}
               </div>
             </section>
 
