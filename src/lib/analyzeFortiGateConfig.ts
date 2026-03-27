@@ -4,13 +4,14 @@ import { parseVips } from "../parsers/parseVips";
 import { linkPublishedServices } from "./linkPublishedServices";
 import { checkVipFindings } from "../checks/checkVipFindings";
 import { calculateRiskScore } from "./riskScore";
+import { parseVirtualServers } from "@/parsers/parseVirtualServers";
 
 export function analyzeFortiGateConfig(configText: string): AnalysisResult {
   const policies = parsePolicies(configText);
   const vips = parseVips(configText);
-  const virtualServers: VirtualServer[] = [];
+  const virtualServers = parseVirtualServers(configText);
 
-  const linkedPublishedServices = linkPublishedServices(policies, vips);
+  const linkedPublishedServices = linkPublishedServices(policies, vips, virtualServers);
   const findings = checkVipFindings(linkedPublishedServices);
   const risk = calculateRiskScore(findings);
 
