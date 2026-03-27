@@ -1,10 +1,16 @@
-import { FirewallPolicy, LinkedPublishedService, VirtualIp } from "../types/firewall";
+import {
+  FirewallPolicy,
+  LinkedPublishedService,
+  VirtualIp,
+  VirtualServer,
+} from "../types/firewall";
 
 export function linkPublishedServices(
   policies: FirewallPolicy[],
-  vips: VirtualIp[]
+  vips: VirtualIp[],
+  virtualServers: VirtualServer[]
 ): LinkedPublishedService[] {
-  return vips.map((vip) => {
+  const vipServices: LinkedPublishedService[] = vips.map((vip) => {
     const linkedPolicies = policies.filter((policy) =>
       policy.dstaddr.includes(vip.name)
     );
@@ -20,4 +26,25 @@ export function linkPublishedServices(
       linkedPolicies,
     };
   });
+
+  const virtualServerServices: LinkedPublishedService[] = virtualServers.map(
+    (virtualServer) => {
+      const linkedPolicies = policies.filter((policy) =>
+        policy.dstaddr.includes(virtualServer.name)
+      );
+
+      return {
+        objectType: "virtual-server",
+        objectName: virtualServer.name,
+        externalInterface: virtualServer.interface,
+        externalIp: virtualServer.ip,
+        externalPort: virtualServer.port,
+        internalTargets: virtualServer.realServers.map((server) => server.ip),
+        linkedPolicyIds: linkedPolicies.map((policy) => policy.id),
+        linkedPolicies,
+      };
+    }
+  );
+
+  return [...vipServices, ...virtualServerServices];
 }
