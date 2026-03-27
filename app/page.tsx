@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { ChangeEvent, useMemo, useState } from "react";
 
 type FindingSeverity = "critical" | "high" | "medium" | "low" | "info";
 
@@ -114,6 +114,7 @@ end`;
 
 export default function HomePage() {
   const [configText, setConfigText] = useState(starterConfig);
+  const [fileName, setFileName] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -155,6 +156,28 @@ export default function HomePage() {
     }
   }
 
+  async function handleFileUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      setConfigText(text);
+      setFileName(file.name);
+      setError(null);
+      setResult(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to read file");
+    }
+  }
+
+  function handleClear() {
+    setConfigText("");
+    setFileName(null);
+    setResult(null);
+    setError(null);
+  }
+
   return (
     <main
       style={{
@@ -168,8 +191,8 @@ export default function HomePage() {
         <header>
           <h1 style={{ margin: 0, fontSize: 36 }}>FortiGate AI Copilot</h1>
           <p style={{ marginTop: 8, color: "#94a3b8", maxWidth: 820 }}>
-            Paste a FortiGate config and analyze published services, linked
-            policies, and exposure findings.
+            Paste or upload a FortiGate config and analyze published services,
+            linked policies, and exposure findings.
           </p>
         </header>
 
@@ -182,6 +205,73 @@ export default function HomePage() {
           }}
         >
           <h2 style={{ marginTop: 0 }}>Config Input</h2>
+
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              flexWrap: "wrap",
+              alignItems: "center",
+              marginBottom: 12,
+            }}
+          >
+            <label
+              style={{
+                border: "1px solid #475569",
+                borderRadius: 8,
+                padding: "10px 14px",
+                background: "#1e293b",
+                cursor: "pointer",
+                fontWeight: 600,
+              }}
+            >
+              Upload Config File
+              <input
+                type="file"
+                accept=".conf,.txt"
+                onChange={handleFileUpload}
+                style={{ display: "none" }}
+              />
+            </label>
+
+            <button
+              onClick={handleAnalyze}
+              disabled={isLoading}
+              style={{
+                border: "none",
+                borderRadius: 8,
+                padding: "10px 16px",
+                background: "#2563eb",
+                color: "white",
+                cursor: isLoading ? "not-allowed" : "pointer",
+                fontWeight: 700,
+              }}
+            >
+              {isLoading ? "Analyzing..." : "Analyze"}
+            </button>
+
+            <button
+              onClick={handleClear}
+              style={{
+                border: "1px solid #475569",
+                borderRadius: 8,
+                padding: "10px 16px",
+                background: "#0f172a",
+                color: "#e5e7eb",
+                cursor: "pointer",
+                fontWeight: 600,
+              }}
+            >
+              Clear
+            </button>
+
+            {fileName && (
+              <div style={{ color: "#93c5fd", fontSize: 14 }}>
+                Loaded file: {fileName}
+              </div>
+            )}
+          </div>
+
           <textarea
             value={configText}
             onChange={(e) => setConfigText(e.target.value)}
@@ -199,24 +289,6 @@ export default function HomePage() {
               boxSizing: "border-box",
             }}
           />
-
-          <div style={{ marginTop: 12, display: "flex", gap: 12 }}>
-            <button
-              onClick={handleAnalyze}
-              disabled={isLoading}
-              style={{
-                border: "none",
-                borderRadius: 8,
-                padding: "10px 16px",
-                background: "#2563eb",
-                color: "white",
-                cursor: isLoading ? "not-allowed" : "pointer",
-                fontWeight: 700,
-              }}
-            >
-              {isLoading ? "Analyzing..." : "Analyze"}
-            </button>
-          </div>
 
           {error && (
             <div
