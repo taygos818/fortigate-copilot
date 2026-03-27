@@ -2,7 +2,7 @@ import { AnalysisResult, VirtualServer } from "../types/firewall";
 import { parsePolicies } from "../parsers/parsePolicies";
 import { parseVips } from "../parsers/parseVips";
 import { linkPublishedServices } from "./linkPublishedServices";
-import { checkVipFindings } from "../checks/checkVipFindings";
+import { checkVipFindings } from "../checks/checkPublishedServiceFindings";
 import { calculateRiskScore } from "./riskScore";
 import { parseVirtualServers } from "@/parsers/parseVirtualServers";
 
