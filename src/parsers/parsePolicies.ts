@@ -44,7 +44,7 @@ export function parsePolicies(configText: string): FirewallPolicy[] {
         srcaddr: [],
         dstaddr: [],
         service: [],
-        action: "accept",
+        action: "deny",
       };
 
       continue;
@@ -134,7 +134,7 @@ function finalizePolicy(policy: Partial<FirewallPolicy>): FirewallPolicy {
     srcaddr: policy.srcaddr ?? [],
     dstaddr: policy.dstaddr ?? [],
     service: policy.service ?? [],
-    action: policy.action ?? "accept",
+    action: policy.action ?? "deny",
     schedule: policy.schedule,
     status: policy.status,
     logtraffic: policy.logtraffic,
@@ -143,14 +143,7 @@ function finalizePolicy(policy: Partial<FirewallPolicy>): FirewallPolicy {
 }
 
 function parseQuotedList(value: string): string[] {
-  const matches = [...value.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
-
-  if (matches.length > 0) {
-    return matches;
-  }
-
-  const stripped = stripOuterQuotes(value);
-  return stripped ? [stripped] : [];
+  return [...value.matchAll(/"([^"]*)"|(\S+)/g)].map((match) => match[1] ?? match[2]);
 }
 
 function stripOuterQuotes(value: string): string {

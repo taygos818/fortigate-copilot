@@ -1,4 +1,4 @@
-import { AnalysisResult, VirtualServer } from "../types/firewall";
+import { AnalysisResult } from "../types/firewall";
 import { parsePolicies } from "../parsers/parsePolicies";
 import { parseVips } from "../parsers/parseVips";
 import { linkPublishedServices } from "./linkPublishedServices";
@@ -15,7 +15,7 @@ export function analyzeFortiGateConfig(configText: string): AnalysisResult {
   const linkedPublishedServices = linkPublishedServices(policies, vips, virtualServers);
   const findings = checkVipFindings(linkedPublishedServices);
   const risk = calculateRiskScore(findings);
-  const aiRecommendations = generateRecommendations(findings);
+  const recommendations = generateRecommendations(findings);
 
   return {
     summary: {
@@ -31,6 +31,6 @@ export function analyzeFortiGateConfig(configText: string): AnalysisResult {
     virtualServers,
     linkedPublishedServices,
     findings,
-    aiRecommendations,
+    recommendations,
   };
 }

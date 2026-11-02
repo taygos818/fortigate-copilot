@@ -11,7 +11,7 @@ const configText = fs.readFileSync(filePath, "utf-8");
 
 const policies = parsePolicies(configText);
 const vips = parseVips(configText);
-const linkedPublishedServices = linkPublishedServices(policies, vips);
+const linkedPublishedServices = linkPublishedServices(policies, vips, []);
 const findings = checkVipFindings(linkedPublishedServices);
 const risk = calculateRiskScore(findings);
 

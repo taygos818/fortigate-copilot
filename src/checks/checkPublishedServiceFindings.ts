@@ -17,18 +17,21 @@ export function checkVipFindings(
 
     if (linkedPolicies.length === 0) {
       findings.push({
-        id: `unused-${service.objectType}-${service.objectName}`,
-        severity: "medium",
-        title: `${objectLabel} ${service.objectName} has no linked policy`,
-        summary: `This ${service.objectType} exists in configuration but is not directly referenced by any firewall policy.`,
+        id: `unlinked-${service.objectType}-${service.objectName}`,
+        severity: "info",
+        title: `${objectLabel} ${service.objectName} has no directly linked accepting policy`,
+        summary: `No enabled accepting policy directly names this ${service.objectType}. Address groups and other indirect references are not resolved.`,
         relatedObjectNames,
         relatedObjectType: service.objectType,
         recommendation:
-          "Confirm whether this published object is still needed. Remove it if it is stale or unused.",
+          "Check address groups and other indirect references before deciding whether this object is unused.",
       });
     }
 
     for (const policy of linkedPolicies) {
+      if (policy.status?.toLowerCase() === "disable" || policy.action.toLowerCase() !== "accept") {
+        continue;
+      }
       if (isAnySourcePolicy(policy)) {
         findings.push({
           id: `${service.objectType}-any-source-${service.objectName}-${policy.id}`,
