@@ -29,6 +29,13 @@ export async function POST(req: Request) {
 
     const result = analyzeFortiGateConfig(configText);
 
+    if (result.summary.policyCount + result.summary.vipCount + result.summary.virtualServerCount === 0) {
+      return Response.json(
+        { error: "No supported policy, VIP, or virtual-server objects were parsed" },
+        { status: 422 }
+      );
+    }
+
     return Response.json(result);
   } catch {
     return Response.json(

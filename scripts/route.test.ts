@@ -20,6 +20,11 @@ test("accepts Windows line endings", async () => {
   assert.equal(response.status, 200);
 });
 
+test("does not return an empty analysis as a zero-risk result", async () => {
+  const response = await POST(request("config firewall vip\nend"));
+  assert.equal(response.status, 422);
+});
+
 test("rejects oversized input before analysis", async () => {
   const response = await POST(request(`config firewall vip\n${"x".repeat(2 * 1024 * 1024)}`));
   assert.equal(response.status, 413);
