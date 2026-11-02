@@ -1,4 +1,4 @@
-import { VirtualServer } from "../types/firewall";
+import { VirtualServer, VirtualServerRealServer } from "../types/firewall";
 
 export function parseVirtualServers(configText: string): VirtualServer[] {
   const lines = configText.split(/\r?\n/);
@@ -7,6 +7,8 @@ export function parseVirtualServers(configText: string): VirtualServer[] {
 
   let inVirtualServerSection = false;
   let currentVirtualServer: Partial<VirtualServer> | null = null;
+  let inRealServerSection = false;
+  let currentRealServer: Partial<VirtualServerRealServer> | null = null;
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
@@ -15,6 +17,29 @@ export function parseVirtualServers(configText: string): VirtualServer[] {
       if (line === "config firewall virtual-server") {
         inVirtualServerSection = true;
       }
+      continue;
+    }
+
+    if (inRealServerSection) {
+      if (line === "end") {
+        if (currentRealServer?.ip) currentVirtualServer?.realServers?.push(currentRealServer as VirtualServerRealServer);
+        currentRealServer = null;
+        inRealServerSection = false;
+      } else if (line.startsWith("edit ")) {
+        if (currentRealServer?.ip) currentVirtualServer?.realServers?.push(currentRealServer as VirtualServerRealServer);
+        currentRealServer = {};
+      } else if (line === "next") {
+        if (currentRealServer?.ip) currentVirtualServer?.realServers?.push(currentRealServer as VirtualServerRealServer);
+        currentRealServer = null;
+      } else if (currentRealServer && line.startsWith("set ")) {
+        const match = /^set (ip|port|status)\s+(.+)$/.exec(line);
+        if (match) currentRealServer[match[1] as "ip" | "port" | "status"] = stripOuterQuotes(match[2]);
+      }
+      continue;
+    }
+
+    if (line === "config realservers" && currentVirtualServer) {
+      inRealServerSection = true;
       continue;
     }
 

@@ -32,7 +32,7 @@ export function generateRecommendations(
   );
 
   const unused = findings.some((f) =>
-    f.title.toLowerCase().includes("no linked policy")
+    f.title.toLowerCase().includes("no directly linked accepting policy")
   );
 
   const wan = findings.some((f) =>
@@ -55,7 +55,7 @@ export function generateRecommendations(
 
   if (unused) {
     recommendations.push(
-      "Remove or validate unused published objects that have no linked firewall policy to reduce configuration drift."
+      "Review published objects with no direct accepting policy link; check address groups before removing anything."
     );
   }
 
@@ -66,7 +66,7 @@ export function generateRecommendations(
   }
 
   recommendations.push(
-    "Remediation order: fix ANY-source exposure → restrict services → clean up unused objects."
+    "Review order: check ANY-source exposure, then broad services, then objects without direct links."
   );
 
   return {

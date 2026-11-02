@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -13,8 +12,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "FortiGate AI Copilot",
-  description: "Analyze FortiGate configurations for exposure, risk, and misconfiguration.",
+  title: "FortiGate Policy Analyzer",
+  description: "Review policy and published-service exposure in a sanitized FortiGate configuration.",
 };
 
 export default function RootLayout({

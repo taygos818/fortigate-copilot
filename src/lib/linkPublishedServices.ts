@@ -10,8 +10,11 @@ export function linkPublishedServices(
   vips: VirtualIp[],
   virtualServers: VirtualServer[]
 ): LinkedPublishedService[] {
+  const activePolicies = policies.filter(
+    (policy) => policy.action.toLowerCase() === "accept" && policy.status?.toLowerCase() !== "disable"
+  );
   const vipServices: LinkedPublishedService[] = vips.map((vip) => {
-    const linkedPolicies = policies.filter((policy) =>
+    const linkedPolicies = activePolicies.filter((policy) =>
       policy.dstaddr.includes(vip.name)
     );
 
@@ -29,7 +32,7 @@ export function linkPublishedServices(
 
   const virtualServerServices: LinkedPublishedService[] = virtualServers.map(
     (virtualServer) => {
-      const linkedPolicies = policies.filter((policy) =>
+      const linkedPolicies = activePolicies.filter((policy) =>
         policy.dstaddr.includes(virtualServer.name)
       );
 

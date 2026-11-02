@@ -88,7 +88,7 @@ export interface AnalysisResult {
   virtualServers: VirtualServer[];
   linkedPublishedServices: LinkedPublishedService[];
   findings: Finding[];
-  aiRecommendations?: {
+  recommendations: {
     summary: string;
     recommendations: string[];
   };

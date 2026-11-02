@@ -48,7 +48,10 @@ interface AnalysisResult {
   };
   linkedPublishedServices: LinkedPublishedService[];
   findings: Finding[];
-  aiRecommendations?: string;
+  recommendations: {
+    summary: string;
+    recommendations: string[];
+  };
 }
 
 const starterConfig = `config firewall vip
@@ -190,10 +193,15 @@ export default function HomePage() {
     >
       <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gap: 24 }}>
         <header>
-          <h1 style={{ margin: 0, fontSize: 36 }}>FortiGate AI Copilot</h1>
+          <h1 style={{ margin: 0, fontSize: 36 }}>FortiGate Policy Analyzer</h1>
           <p style={{ marginTop: 8, color: "#94a3b8", maxWidth: 820 }}>
             Paste or upload a FortiGate config and analyze published services,
             linked policies, and exposure findings.
+          </p>
+          <p style={{ color: "#fbbf24", maxWidth: 820 }}>
+            Use a sanitized configuration. Analysis runs on the server and checks only the
+            supported policy, VIP, and virtual-server sections. Findings and the score
+            are review prompts, not a security verdict.
           </p>
         </header>
 
@@ -391,7 +399,7 @@ export default function HomePage() {
             </section>
 
             <section>
-              <h2>AI Summary & Recommendations</h2>
+              <h2>Rule-based summary and recommendations</h2>
               <div
                 style={{
                   border: "1px solid #334155",
@@ -403,7 +411,12 @@ export default function HomePage() {
                   lineHeight: 1.6,
                 }}
               >
-                {result.aiRecommendations ?? "No recommendations generated."}
+                <p>{result.recommendations.summary}</p>
+                <ul>
+                  {result.recommendations.recommendations.map((recommendation) => (
+                    <li key={recommendation}>{recommendation}</li>
+                  ))}
+                </ul>
               </div>
             </section>
 
@@ -539,7 +552,7 @@ function RiskScoreCard({ score }: { score: number }) {
         background: "#111827",
       }}
     >
-      <div style={{ fontSize: 13, color: "#94a3b8" }}>Risk Score</div>
+      <div style={{ fontSize: 13, color: "#94a3b8" }}>Finding points</div>
       <div
         style={{
           fontSize: 34,
@@ -572,6 +585,7 @@ function getSeverityColor(severity: string) {
 }
 
 function getRiskScoreColor(score: number) {
+  if (score === 0) return "#94a3b8";
   if (score >= 70) return "#ef4444";
   if (score >= 40) return "#f97316";
   if (score >= 20) return "#eab308";

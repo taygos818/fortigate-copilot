@@ -1,7 +1,12 @@
 import { analyzeFortiGateConfig } from "@/lib/analyzeFortiGateConfig";
 
+const MAX_CONFIG_BYTES = 2 * 1024 * 1024;
+
 export async function POST(req: Request) {
   try {
+    if (Number(req.headers.get("content-length")) > MAX_CONFIG_BYTES) {
+      return Response.json({ error: "Config exceeds the 2 MB limit" }, { status: 413 });
+    }
     const body = await req.json();
     const configText = body?.configText;
 
@@ -12,15 +17,22 @@ export async function POST(req: Request) {
       );
     }
 
+    if (Buffer.byteLength(configText, "utf8") > MAX_CONFIG_BYTES) {
+      return Response.json({ error: "Config exceeds the 2 MB limit" }, { status: 413 });
+    }
+    if (!/^config firewall (policy|vip|virtual-server)\r?$/m.test(configText)) {
+      return Response.json(
+        { error: "No supported FortiGate policy, VIP, or virtual-server section found" },
+        { status: 400 }
+      );
+    }
+
     const result = analyzeFortiGateConfig(configText);
 
     return Response.json(result);
-  } catch (error) {
+  } catch {
     return Response.json(
-      {
-        error: "Failed to analyze config",
-        details: error instanceof Error ? error.message : String(error),
-      },
+      { error: "Could not analyze this configuration" },
       { status: 500 }
     );
   }

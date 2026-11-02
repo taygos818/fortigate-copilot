@@ -135,14 +135,7 @@ function finalizeVip(vip: Partial<VirtualIp>): VirtualIp {
 }
 
 function parseQuotedList(value: string): string[] {
-  const matches = [...value.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
-
-  if (matches.length > 0) {
-    return matches;
-  }
-
-  const stripped = stripOuterQuotes(value);
-  return stripped ? [stripped] : [];
+  return [...value.matchAll(/"([^"]*)"|(\S+)/g)].map((match) => match[1] ?? match[2]);
 }
 
 function stripOuterQuotes(value: string): string {

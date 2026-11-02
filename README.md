@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FortiGate Policy Analyzer
 
-## Getting Started
+A local review aid for selected FortiGate configuration sections. Paste or upload a sanitized configuration, then inspect published VIPs and virtual servers, directly linked accepting policies, exposure findings, a simple score, and rule-based recommendations. No AI service or API key is involved.
 
-First, run the development server:
+## Run locally
 
-```bash
+Requires Node.js 20 or later.
+
+```sh
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`. Use the included documentation-address sample to explore the output. To validate changes, run `npm test`, `npm run lint`, and `npm run build`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The browser sends the entered configuration to this app's `/api/analyze` server route. The app does not deliberately store it, but a hosted deployment, its infrastructure, and logs are outside this repository's control. Use sanitized or synthetic configurations. Keep the app local unless you have reviewed that data flow and added any access controls a deployment requires.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## What the analysis covers
 
-## Learn More
+- Top-level `config firewall policy`, `config firewall vip`, and `config firewall virtual-server` sections, including basic real-server targets.
+- Direct policy `dstaddr` references to a VIP or virtual-server name. Disabled and denying policies are excluded from exposure links.
+- Findings for an accepting policy with source `all`, service `ALL`, or a recognized WAN-style interface name, plus published objects without a directly linked accepting policy.
+- A score based on fixed severity points, capped at 100. The score is for sorting findings, not a calibrated measure of security.
 
-To learn more about Next.js, take a look at the following resources:
+The analyzer does **not** resolve address groups, nested objects, schedules, routing, central NAT, policy order, or every FortiOS syntax variant. A missing finding is not evidence that exposure is safe. The WAN check recognizes a small list of interface names; a custom interface name may be missed. Review the original configuration before changing a firewall.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Only synthetic examples belong in this repository. Do not commit real firewall configurations, credentials, customer details, or generated analysis of them. Repository visibility is a separate decision from completing the local tool.
