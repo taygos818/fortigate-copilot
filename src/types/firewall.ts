@@ -21,6 +21,7 @@ export interface FirewallPolicy {
 
 export interface VirtualIp {
   name: string;
+  type?: string;
   extip?: string;
   extintf?: string;
   mappedip: string[];
@@ -28,6 +29,7 @@ export interface VirtualIp {
   extport?: string;
   mappedport?: string;
   protocol?: string;
+  realServers: VirtualServerRealServer[];
   comments?: string;
 }
 
@@ -58,6 +60,8 @@ export interface LinkedPublishedService {
   internalTargets: string[];
   linkedPolicyIds: number[];
   linkedPolicies: FirewallPolicy[];
+  /** Policy id -> groups the policy's dstaddr went through to reach this object. */
+  linkedVia: Record<number, string[]>;
 }
 
 export interface Finding {
@@ -88,7 +92,7 @@ export interface AnalysisResult {
   virtualServers: VirtualServer[];
   linkedPublishedServices: LinkedPublishedService[];
   findings: Finding[];
-  aiRecommendations?: {
+  recommendations: {
     summary: string;
     recommendations: string[];
   };

@@ -23,21 +23,10 @@ export function generateRecommendations(
   const highCount = findings.filter((f) => f.severity === "high").length;
   const mediumCount = findings.filter((f) => f.severity === "medium").length;
 
-  const anySource = findings.some((f) =>
-    f.title.toLowerCase().includes("exposed to any source")
-  );
-
-  const broadService = findings.some((f) =>
-    f.title.toLowerCase().includes("broad service")
-  );
-
-  const unused = findings.some((f) =>
-    f.title.toLowerCase().includes("no linked policy")
-  );
-
-  const wan = findings.some((f) =>
-    f.title.toLowerCase().includes("wan-facing")
-  );
+  const anySource = findings.some((f) => f.id.includes("-any-source-"));
+  const broadService = findings.some((f) => f.id.includes("-broad-service-"));
+  const unused = findings.some((f) => f.id.startsWith("unlinked-"));
+  const wan = findings.some((f) => f.id.includes("-wan-published-"));
 
   const recommendations: string[] = [];
 
@@ -55,7 +44,7 @@ export function generateRecommendations(
 
   if (unused) {
     recommendations.push(
-      "Remove or validate unused published objects that have no linked firewall policy to reduce configuration drift."
+      "Review published objects with no linked accepting policy and remove the ones that are no longer needed."
     );
   }
 
@@ -66,7 +55,7 @@ export function generateRecommendations(
   }
 
   recommendations.push(
-    "Remediation order: fix ANY-source exposure → restrict services → clean up unused objects."
+    "Review order: check ANY-source exposure, then broad services, then objects without linked policies."
   );
 
   return {

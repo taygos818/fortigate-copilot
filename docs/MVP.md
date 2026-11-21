@@ -1,4 +1,4 @@
-# FortiGate AI Copilot — MVP
+# FortiGate Policy Analyzer — MVP
 
 ## 🎯 Goal
 Analyze FortiGate firewall configurations and identify risky exposure through:
@@ -78,7 +78,7 @@ Detect:
 - WAN → internal exposure
 - VIP exposed to "all"
 - service = ALL
-- unused VIPs (no policy)
+- published objects without a directly linked accepting policy (review indirect references before treating them as unused)
 
 ---
 
@@ -94,7 +94,7 @@ Max = 100
 
 ---
 
-### 7. AI Explanation Layer
+### 7. Rule-based explanation layer
 
 Input:
 - structured findings
@@ -127,7 +127,7 @@ Config Input
 → Linking Engine  
 → Findings Engine  
 → Risk Score  
-→ AI Explanation  
+→ Rule-based Recommendations
 
 ---
 
@@ -147,6 +147,6 @@ See:
 
 ---
 
-## ▶️ NEXT STEP
+## Current release boundary
 
-Build FortiGate policy parser (`parsePolicies.ts`)
+The first public version uses deterministic rules. It does not call an AI model. It resolves address and VIP groups and reads interface roles, zones and SD-WAN to decide what faces the internet, but it does not evaluate policy order, schedules, routing or central NAT, and it cannot prove that a configuration is safe. Its score is an ordering aid.

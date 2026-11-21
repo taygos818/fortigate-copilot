@@ -1,21 +1,28 @@
-import { AnalysisResult, VirtualServer } from "../types/firewall";
+import { AnalysisResult } from "../types/firewall";
+import { parseConfigTree } from "../parsers/configTree";
 import { parsePolicies } from "../parsers/parsePolicies";
 import { parseVips } from "../parsers/parseVips";
+import { parseVirtualServers } from "../parsers/parseVirtualServers";
+import { parseAddressGroups } from "../parsers/parseAddressGroups";
+import { parseWanInterfaces } from "../parsers/parseInterfaces";
 import { linkPublishedServices } from "./linkPublishedServices";
-import { checkVipFindings } from "../checks/checkPublishedServiceFindings";
+import { checkPublishedServiceFindings } from "../checks/checkPublishedServiceFindings";
 import { calculateRiskScore } from "./riskScore";
-import { parseVirtualServers } from "@/parsers/parseVirtualServers";
 import { generateRecommendations } from "./generateRecommendations";
 
 export function analyzeFortiGateConfig(configText: string): AnalysisResult {
-  const policies = parsePolicies(configText);
-  const vips = parseVips(configText);
-  const virtualServers = parseVirtualServers(configText);
+  const tree = parseConfigTree(configText);
 
-  const linkedPublishedServices = linkPublishedServices(policies, vips, virtualServers);
-  const findings = checkVipFindings(linkedPublishedServices);
+  const policies = parsePolicies(tree);
+  const vips = parseVips(tree);
+  const virtualServers = parseVirtualServers(tree);
+  const groups = parseAddressGroups(tree);
+  const wanInterfaces = parseWanInterfaces(tree);
+
+  const linkedPublishedServices = linkPublishedServices(policies, vips, virtualServers, groups);
+  const findings = checkPublishedServiceFindings(linkedPublishedServices, { groups, wanInterfaces });
   const risk = calculateRiskScore(findings);
-  const aiRecommendations = generateRecommendations(findings);
+  const recommendations = generateRecommendations(findings);
 
   return {
     summary: {
@@ -31,6 +38,6 @@ export function analyzeFortiGateConfig(configText: string): AnalysisResult {
     virtualServers,
     linkedPublishedServices,
     findings,
-    aiRecommendations,
+    recommendations,
   };
 }
