@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     if (Buffer.byteLength(configText, "utf8") > MAX_CONFIG_BYTES) {
       return Response.json({ error: "Config exceeds the 2 MB limit" }, { status: 413 });
     }
-    if (!/^config firewall (policy|vip|virtual-server)\r?$/m.test(configText)) {
+    if (!/^[ \t]*config[ \t]+firewall[ \t]+(policy|vip|virtual-server)[ \t]*\r?$/m.test(configText)) {
       return Response.json(
         { error: "No supported FortiGate policy, VIP, or virtual-server section found" },
         { status: 400 }

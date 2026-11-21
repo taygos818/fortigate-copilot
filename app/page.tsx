@@ -24,6 +24,7 @@ interface LinkedPublishedService {
   internalTargets: string[];
   linkedPolicyIds: number[];
   linkedPolicies: FirewallPolicy[];
+  linkedVia: Record<number, string[]>;
 }
 
 interface Finding {
@@ -462,7 +463,13 @@ export default function HomePage() {
                       <div>
                         <strong>Linked Policies:</strong>{" "}
                         {service.linkedPolicyIds.length > 0
-                          ? service.linkedPolicyIds.join(", ")
+                          ? service.linkedPolicyIds
+                              .map((policyId) =>
+                                service.linkedVia[policyId]?.length
+                                  ? `${policyId} (via ${service.linkedVia[policyId].join(" > ")})`
+                                  : String(policyId)
+                              )
+                              .join(", ")
                           : "none"}
                       </div>
                     </div>

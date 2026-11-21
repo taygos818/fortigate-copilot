@@ -36,7 +36,7 @@ end`);
 
   assert.deepEqual(result.linkedPublishedServices[0].linkedPolicyIds, []);
   assert.equal(result.findings.length, 1);
-  assert.match(result.findings[0].title, /no directly linked accepting policy/);
+  assert.match(result.findings[0].title, /no linked accepting policy/);
   assert.equal(result.summary.riskScore, 0);
 });
 
