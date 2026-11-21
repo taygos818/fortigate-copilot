@@ -3,10 +3,22 @@ import {
   FirewallPolicy,
   LinkedPublishedService,
 } from "../types/firewall";
+import { GroupMembers, expandAddresses } from "../parsers/parseAddressGroups";
+import { DEFAULT_WAN_NAMES } from "../parsers/parseInterfaces";
 
-export function checkVipFindings(
-  linkedPublishedServices: LinkedPublishedService[]
+export interface FindingContext {
+  /** Address and VIP groups, used to see whether a source group contains `all`. */
+  groups?: GroupMembers;
+  /** Lower-case interface and zone names treated as internet-facing. */
+  wanInterfaces?: Set<string>;
+}
+
+export function checkPublishedServiceFindings(
+  linkedPublishedServices: LinkedPublishedService[],
+  context: FindingContext = {}
 ): Finding[] {
+  const groups = context.groups ?? new Map();
+  const wanInterfaces = context.wanInterfaces ?? new Set(DEFAULT_WAN_NAMES);
   const findings: Finding[] = [];
 
   for (const service of linkedPublishedServices) {
@@ -19,12 +31,12 @@ export function checkVipFindings(
       findings.push({
         id: `unlinked-${service.objectType}-${service.objectName}`,
         severity: "info",
-        title: `${objectLabel} ${service.objectName} has no directly linked accepting policy`,
-        summary: `No enabled accepting policy directly names this ${service.objectType}. Address groups and other indirect references are not resolved.`,
+        title: `${objectLabel} ${service.objectName} has no linked accepting policy`,
+        summary: `No enabled accepting policy names this ${service.objectType}, directly or through an address or VIP group in this configuration.`,
         relatedObjectNames,
         relatedObjectType: service.objectType,
         recommendation:
-          "Check address groups and other indirect references before deciding whether this object is unused.",
+          "Confirm the object is unused (for example, not referenced from another VDOM or a central NAT rule) before removing it.",
       });
     }
 
@@ -32,12 +44,16 @@ export function checkVipFindings(
       if (policy.status?.toLowerCase() === "disable" || policy.action.toLowerCase() !== "accept") {
         continue;
       }
-      if (isAnySourcePolicy(policy)) {
+      const anySourceVia = anySourceGroupChain(policy, groups);
+      if (anySourceVia) {
         findings.push({
           id: `${service.objectType}-any-source-${service.objectName}-${policy.id}`,
           severity: "high",
           title: `${objectLabel} ${service.objectName} is exposed to any source`,
-          summary: `Policy ${policy.id} allows traffic from 'all' sources to this ${service.objectType}.`,
+          summary:
+            anySourceVia.length > 0
+              ? `Policy ${policy.id} allows traffic from 'all' sources (through group ${anySourceVia.join(" > ")}) to this ${service.objectType}.`
+              : `Policy ${policy.id} allows traffic from 'all' sources to this ${service.objectType}.`,
           details: buildPolicyDetails(policy, service),
           policyIds: [policy.id],
           relatedObjectNames,
@@ -62,7 +78,7 @@ export function checkVipFindings(
         });
       }
 
-      if (isWanPublished(service, policy)) {
+      if (isWanPublished(service, policy, wanInterfaces)) {
         findings.push({
           id: `${service.objectType}-wan-published-${service.objectName}-${policy.id}`,
           severity: "info",
@@ -82,8 +98,21 @@ export function checkVipFindings(
   return dedupeFindings(findings);
 }
 
-function isAnySourcePolicy(policy: FirewallPolicy): boolean {
-  return policy.srcaddr.some((addr) => addr.toLowerCase() === "all");
+/**
+ * The group chain through which a policy's source reaches `all`: an empty list
+ * for a direct `all`, a list of group names for an indirect one, or undefined
+ * when the source never resolves to `all`.
+ */
+function anySourceGroupChain(policy: FirewallPolicy, groups: GroupMembers): string[] | undefined {
+  const matches = expandAddresses(policy.srcaddr, groups).filter(
+    (address) => address.name.toLowerCase() === "all"
+  );
+
+  if (matches.length === 0) {
+    return undefined;
+  }
+
+  return matches.reduce((best, match) => (match.via.length < best.via.length ? match : best)).via;
 }
 
 function isBroadServicePolicy(policy: FirewallPolicy): boolean {
@@ -92,16 +121,18 @@ function isBroadServicePolicy(policy: FirewallPolicy): boolean {
 
 function isWanPublished(
   service: LinkedPublishedService,
-  policy: FirewallPolicy
+  policy: FirewallPolicy,
+  wanInterfaces: Set<string>
 ): boolean {
   const interfaceNames = [
     ...(service.externalInterface ? [service.externalInterface] : []),
     ...policy.srcintf,
   ].map((name) => name.toLowerCase());
 
-  return interfaceNames.some((name) =>
-    ["wan", "wan1", "wan2", "internet", "external", "outside"].includes(name)
-  );
+  // `any` as a policy source interface includes every WAN interface.
+  const anySourceInterface = policy.srcintf.some((name) => name.toLowerCase() === "any");
+
+  return anySourceInterface || interfaceNames.some((name) => wanInterfaces.has(name));
 }
 
 function buildPolicyDetails(
@@ -126,6 +157,11 @@ function buildPolicyDetails(
       `External Port: ${service.externalPort ?? "unknown"}`,
       `Internal Targets: ${service.internalTargets.join(", ") || "none"}`
     );
+
+    const via = service.linkedVia[policy.id];
+    if (via && via.length > 0) {
+      parts.push(`Linked Through Group: ${via.join(" > ")}`);
+    }
   }
 
   return parts.join(" | ");
