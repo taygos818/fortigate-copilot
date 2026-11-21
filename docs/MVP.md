@@ -149,4 +149,4 @@ See:
 
 ## Current release boundary
 
-The first version uses deterministic rules. It does not call an AI model, resolve address groups or routing, or prove that a configuration is safe. Its score is an ordering aid. Keep the repository private until Taylor explicitly selects public visibility.
+The first public version uses deterministic rules. It does not call an AI model. It resolves address and VIP groups and reads interface roles, zones and SD-WAN to decide what faces the internet, but it does not evaluate policy order, schedules, routing or central NAT, and it cannot prove that a configuration is safe. Its score is an ordering aid.
